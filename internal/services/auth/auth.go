@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"sso/internal/domain/models"
 	"sso/internal/lib/jwt"
+	"sso/internal/lib/logger/sl"
 	"sso/internal/storage"
 	"time"
 
@@ -36,6 +37,8 @@ type AppProvider interface {
 
 var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrInvalidAppID       = errors.New("invalid app id")
+	ErrUserExists         = errors.New("user already exists")
 )
 
 // New returns a new instance of the Auth service
@@ -66,17 +69,18 @@ func (a *Auth) Login(ctx context.Context, email string, password string, appID i
 	user, err := a.usrProvider.User(ctx, email)
 	if err != nil {
 		if errors.Is(err, storage.ErrUserNotFound) {
-			a.log.Warn("user not found", err)
+			a.log.Warn("user not found", sl.Err(err))
 
 			return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 		}
 
-		a.log.Error("failed to get user")
+		a.log.Error("failed to get user", sl.Err(err))
+
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword(user.PassHash, []byte(password)); err != nil {
-		a.log.Info("invalid credentials")
+		a.log.Info("invalid credentials", sl.Err(err))
 
 		return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
 	}
@@ -90,7 +94,7 @@ func (a *Auth) Login(ctx context.Context, email string, password string, appID i
 
 	token, err := jwt.NewToken(user, app, a.tokenTTL)
 	if err != nil {
-		log.Error("failed to generate token")
+		log.Error("failed to generate token", sl.Err(err))
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 	return token, nil
@@ -110,14 +114,20 @@ func (a *Auth) RegisterNewUser(ctx context.Context, email string, password strin
 
 	passHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Error("failed to generate password hash", err)
+		log.Error("failed to generate password hash", sl.Err(err))
 
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 
 	id, err := a.usrSaver.SaveUser(ctx, email, passHash)
 	if err != nil {
-		log.Error("failed to save user", err)
+		if errors.Is(err, storage.ErrUserExists) {
+			log.Warn("user alredy exisits", sl.Err(err))
+
+			return 0, fmt.Errorf("%s: %w", op, ErrUserExists)
+		}
+
+		log.Error("failed to save user", sl.Err(err))
 
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
@@ -140,6 +150,12 @@ func (a *Auth) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 
 	isAdmin, err := a.usrProvider.IsAdmin(ctx, userID)
 	if err != nil {
+		if errors.Is(err, storage.ErrAppNotFound) {
+			a.log.Warn("user not found")
+
+			return false, fmt.Errorf("%s: %w", op, ErrInvalidAppID)
+		}
+
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
 
