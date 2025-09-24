@@ -6,6 +6,8 @@ toolchain go1.24.7
 
 require google.golang.org/grpc v1.75.1
 
+require github.com/golang-migrate/migrate v3.5.4+incompatible // indirect
+
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/Sheridanlk/protos v0.0.2 // indirect
