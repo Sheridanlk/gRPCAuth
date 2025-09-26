@@ -8,13 +8,13 @@ import (
 )
 
 type Config struct {
-	Env       string          `yaml:"env" env-required:"true"`
-	TokenTTL  time.Duration   `yaml:"token_ttl" env-required:"true"`
-	Postrgres PostrgresConfig `yaml:"postgres"`
-	GRPC      GRPCConfig      `yaml:"grpc"`
+	Env       string         `yaml:"env" env-required:"true"`
+	TokenTTL  time.Duration  `yaml:"token_ttl" env-required:"true"`
+	Postrgres PostgresConfig `yaml:"postgres"`
+	GRPC      GRPCConfig     `yaml:"grpc"`
 }
 
-type PostrgresConfig struct {
+type PostgresConfig struct {
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
 	Name     string `yaml:"name"`
