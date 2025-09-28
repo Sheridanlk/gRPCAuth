@@ -35,7 +35,7 @@ func New(user string, password string, dbname string, port int) (*Storage, error
 func (s *Storage) SaveUser(ctx context.Context, email string, passHash []byte) (int64, error) {
 	const op = "storage.postgres.SaveUser"
 
-	stmt, err := s.db.Prepare("INSERT INTO users(email, pass_hash) VAULUES($1, $2)")
+	stmt, err := s.db.Prepare("INSERT INTO users(email, pass_hash) VALUES($1, $2) RETURNING id")
 	if err != nil {
 		return 0, fmt.Errorf("%s: can't prepare query: %w", op, err)
 	}
@@ -57,7 +57,7 @@ func (s *Storage) SaveUser(ctx context.Context, email string, passHash []byte) (
 func (s *Storage) User(ctx context.Context, email string) (models.User, error) {
 	const op = "storage.postgres.User"
 
-	stmt, err := s.db.Prepare("SECECT id, email, pass_hash FROM users WHERE email = $1")
+	stmt, err := s.db.Prepare("SELECT id, email, pass_hash FROM users WHERE email = $1")
 	if err != nil {
 		return models.User{}, fmt.Errorf("%s: can't prepare query: %w", op, err)
 	}
