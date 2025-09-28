@@ -26,12 +26,7 @@ type GRPCConfig struct {
 	Timeout time.Duration `yaml:"timeout"`
 }
 
-func Load() *Config {
-	path := os.Getenv("CONFIG_PATH")
-	if path == "" {
-		panic("CONFIG_PARH is not set")
-	}
-
+func LoadByPath(path string) *Config {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		panic("config file does not exist: " + path)
 	}
@@ -42,4 +37,13 @@ func Load() *Config {
 		panic("failed to read config: " + err.Error())
 	}
 	return &cfg
+}
+
+func Load() *Config {
+	path := os.Getenv("CONFIG_PATH")
+	if path == "" {
+		panic("CONFIG_PARH is not set")
+	}
+
+	return LoadByPath(path)
 }
