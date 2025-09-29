@@ -17,6 +17,8 @@ const (
 	appID      = 1
 	appSecret  = "test-secret"
 
+	emptyUserID = 0
+
 	passDefaultLen = 10
 )
 
@@ -123,6 +125,134 @@ func TestRegister_FailCases(t *testing.T) {
 			require.Contains(t, err.Error(), tt.expectedErr)
 		})
 
+	}
+}
+
+func TestLogin_FailCases(t *testing.T) {
+	ctx, st := suite.New(t)
+
+	email := gofakeit.Email()
+	password := randomFakePassword()
+
+	regRest, err := st.AuthClient.Register(ctx, &ssov1.RegisterRequest{
+		Email:    email,
+		Password: password,
+	})
+
+	require.NoError(t, err)
+	assert.NotEmpty(t, regRest.GetUserId())
+
+	tests := []struct {
+		name        string
+		email       string
+		password    string
+		appID       int32
+		expectedErr string
+	}{
+		{
+			name:        "Login with empty email",
+			email:       "",
+			password:    password,
+			appID:       appID,
+			expectedErr: "email is required",
+		},
+		{
+			name:        "Login with empty password",
+			email:       email,
+			password:    "",
+			appID:       appID,
+			expectedErr: "password is required",
+		},
+		{
+			name:        "Login with empty app_id",
+			email:       email,
+			password:    password,
+			appID:       emptyAppID,
+			expectedErr: "app_id is required",
+		},
+		{
+			name:        "Login with empty all",
+			email:       "",
+			password:    "",
+			appID:       emptyAppID,
+			expectedErr: "email is required",
+		},
+		{
+			name:        "Login with incorrect login",
+			email:       gofakeit.Email(),
+			password:    password,
+			appID:       appID,
+			expectedErr: "invalid email or password",
+		},
+		{
+			name:        "Login with incorrect password",
+			email:       email,
+			password:    randomFakePassword(),
+			appID:       appID,
+			expectedErr: "invalid email or password",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := st.AuthClient.Login(ctx, &ssov1.LoginRequest{
+				Email:    tt.email,
+				Password: tt.password,
+				AppId:    tt.appID,
+			})
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tt.expectedErr)
+		})
+	}
+}
+
+func Test_IsAdmin_HappyCase(t *testing.T) {
+	ctx, st := suite.New(t)
+
+	email := gofakeit.Email()
+	password := randomFakePassword()
+
+	respReg, err := st.AuthClient.Register(ctx, &ssov1.RegisterRequest{
+		Email:    email,
+		Password: password,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, respReg.GetUserId())
+
+	respIsAdmin, err := st.AuthClient.IsAdmin(ctx, &ssov1.IsAdminRequest{
+		UserId: respReg.GetUserId(),
+	})
+	require.NoError(t, err)
+	require.Equal(t, respIsAdmin.GetIsAdmin(), false)
+}
+
+func Test_IsAdminFailCases(t *testing.T) {
+	ctx, st := suite.New(t)
+
+	tests := []struct {
+		name        string
+		userID      int64
+		expectedErr string
+	}{
+		{
+			name:        "IsAdmin with empty user_id",
+			userID:      emptyUserID,
+			expectedErr: "user_id is required",
+		},
+		{
+			name:        "IsAdmin with incorrect user_id",
+			userID:      int64(100),
+			expectedErr: "user not found",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := st.AuthClient.IsAdmin(ctx, &ssov1.IsAdminRequest{
+				UserId: tt.userID,
+			})
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tt.expectedErr)
+		})
 	}
 }
 
