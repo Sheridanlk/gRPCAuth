@@ -31,6 +31,10 @@ func New(user string, password string, dbname string, port int) (*Storage, error
 	return &Storage{db: db}, nil
 }
 
+func (s *Storage) Stop() {
+	s.db.Close()
+}
+
 // SaveUser saves user to db
 func (s *Storage) SaveUser(ctx context.Context, email string, passHash []byte) (int64, error) {
 	const op = "storage.postgres.SaveUser"

@@ -29,6 +29,7 @@ func main() {
 	<-stop
 
 	application.GRPCSrv.Stop()
+	application.Storage.Stop()
 
 	log.Info("Application stopped")
 }

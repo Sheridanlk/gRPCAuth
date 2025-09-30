@@ -10,6 +10,7 @@ import (
 
 type App struct {
 	GRPCSrv *grpcapp.App
+	Storage *postgres.Storage
 }
 
 func New(log *slog.Logger, grpcPort int, storageUser string, storagePassword string, storageName string, storagePort int, tokenTTL time.Duration) *App {
@@ -24,5 +25,6 @@ func New(log *slog.Logger, grpcPort int, storageUser string, storagePassword str
 
 	return &App{
 		GRPCSrv: grpcApp,
+		Storage: storage,
 	}
 }
