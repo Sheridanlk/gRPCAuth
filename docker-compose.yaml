@@ -1,0 +1,51 @@
+services:
+  auth-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_HOST: auth-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: auth
+      POSTGRES_PORT: 5432
+    volumes:
+      - auth_pg:/var/lib/posthresql/datao
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [docker_net]
+
+  migrate:
+    image: migrate/migrate:4
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    networks: [docker_net]
+    volumes:
+      - ./migrations:/migrations:ro
+    command: [
+      "-path", "/migrations",
+      "-database", "postgres://postgres:postgres@auth-db:5432/auth?sslmode=disable",
+      "up"
+    ]
+    restart: "no"
+
+  auth:
+    build: .
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    container_name: auth_grpc
+    environment:
+      CONFIG_PATH: /app/config.yaml
+    ports:
+      - "34443:34443"    
+    networks: [docker_net]
+
+volumes:
+  auth_pg:
+
+networks:
+  docker_net:
+    external: true
