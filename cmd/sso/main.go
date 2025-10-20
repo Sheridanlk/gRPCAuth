@@ -19,7 +19,7 @@ func main() {
 		slog.String("env", cfg.Env),
 	)
 
-	application := app.New(log, cfg.GRPC.Port, cfg.Postrgres.User, cfg.Postrgres.Password, cfg.Postrgres.Name, cfg.Postrgres.Port, cfg.TokenTTL)
+	application := app.New(log, cfg.GRPC.Port, cfg.Postrgres.User, cfg.Postrgres.Password, cfg.Postrgres.Name, cfg.Postrgres.Host, cfg.Postrgres.Port, cfg.TokenTTL)
 
 	go application.GRPCSrv.Run()
 

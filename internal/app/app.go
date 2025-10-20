@@ -13,8 +13,8 @@ type App struct {
 	Storage *postgres.Storage
 }
 
-func New(log *slog.Logger, grpcPort int, storageUser string, storagePassword string, storageName string, storagePort int, tokenTTL time.Duration) *App {
-	storage, err := postgres.New(storageUser, storagePassword, storageName, storagePort)
+func New(log *slog.Logger, grpcPort int, storageUser string, storagePassword string, storageName string, storageHost string, storagePort int, tokenTTL time.Duration) *App {
+	storage, err := postgres.New(storageUser, storagePassword, storageName, storageHost, storagePort)
 	if err != nil {
 		panic(err)
 	}
