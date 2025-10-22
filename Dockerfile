@@ -14,6 +14,5 @@ FROM alpine:3.20
 WORKDIR /app
 
 COPY --from=build /app/grpc-auth .
-COPY /config/config.yaml ./config.yaml
 
-ENTRYPOINT [ "/app/grpc-auth" ] 
+ENTRYPOINT [ "/app/grpc-auth" ]

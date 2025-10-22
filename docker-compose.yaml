@@ -16,7 +16,7 @@ services:
       retries: 5
     networks: [docker_net]
 
-  migrate:
+  migrate-auth:
     image: migrate/migrate:4
     depends_on:
       auth-db:
@@ -38,9 +38,11 @@ services:
         condition: service_healthy
     container_name: auth_grpc
     environment:
-      CONFIG_PATH: /app/config.yaml
+      CONFIG_PATH: /config/config.yaml
     ports:
       - "34443:34443"    
+    volumes:
+     - ./config:/config/:ro
     networks: [docker_net]
 
 volumes:
